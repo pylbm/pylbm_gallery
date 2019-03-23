@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import division
 """
  Solver D1Q2 for the advection reaction equation on the 1D-torus
 
@@ -7,15 +5,12 @@ from __future__ import division
  u(t=0,x) = u0(x),
  u(t,x=0) = u(t,x=1)
 
- test: True
 """
-from six.moves import range
 import numpy as np
-from scipy import stats
 import sympy as sp
 import pylbm
 
-t, X, LA, u = sp.symbols('t, X, LA, u')
+X, LA, u = sp.symbols('X, LA, u')
 C, MU = sp.symbols('C, MU')
 
 
@@ -29,7 +24,7 @@ def solution(t, x, xmin, xmax, c, mu):
     ui = u0(x - c*t, xmin, xmax)
     return (dt+2*ui-(1-2*ui)*dt)/(2-2*(1-2*ui)*dt)
 
-def run(dt, Tf, generator = 'numpy', sorder=None, withPlot=True):
+def run(dt, Tf, generator='numpy', sorder=None, withPlot=True):
     """
     Parameters
     ----------
@@ -58,19 +53,22 @@ def run(dt, Tf, generator = 'numpy', sorder=None, withPlot=True):
     dx = la*dt
     # dictionary of the simulation
     dico = {
-        'box':{'x':[xmin, xmax], 'label':-1},
-        'space_step':dx,
-        'scheme_velocity':LA,
-        'schemes':[
-        {
-            'velocities':[1,2],
-            'conserved_moments':u,
-            'polynomials':[1,LA*X],
-            'relaxation_parameters':[0., s],
-            'equilibrium':[u, C*u],
-            'source_terms':{u:MU*u*(1-u)},
-            'init':{u:(u0,(xmin, xmax))},
+        'box': {
+            'x': [xmin, xmax],
+            'label': -1
         },
+        'space_step': dx,
+        'scheme_velocity': LA,
+        'schemes': [
+            {
+                'velocities': [1, 2],
+                'conserved_moments': u,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0., s],
+                'equilibrium': [u, C*u],
+                'source_terms': {u: MU*u*(1-u)},
+                'init': {u: (u0, (xmin, xmax))},
+            },
         ],
         'generator': generator,
         'parameters': {LA: la, C: c, MU: mu},
@@ -79,10 +77,9 @@ def run(dt, Tf, generator = 'numpy', sorder=None, withPlot=True):
     # simulation
     sol = pylbm.Simulation(dico, sorder=sorder) # build the simulation
 
-
     if withPlot:
         # create the viewer to plot the solution
-        viewer = pylbm.viewer.matplotlibViewer
+        viewer = pylbm.viewer.matplotlib_viewer
         fig = viewer.Fig()
         ax = fig[0]
         ymin, ymax = -.2, 1.2
@@ -106,7 +103,6 @@ def run(dt, Tf, generator = 'numpy', sorder=None, withPlot=True):
         while sol.t < Tf:
             sol.one_time_step()
 
-    sol.time_info()
     return np.linalg.norm(sol.m[u] - solution(sol.t, sol.domain.x, xmin, xmax, c, mu), np.inf)
 
 if __name__ == '__main__':

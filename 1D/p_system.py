@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import division
 """
  Solver D1Q2Q2 for the p-system on [0, 1]
 
@@ -11,8 +9,6 @@ from __future__ import division
 
  the initial condition is a picewise constant function
  in order to visualize the simulation of elementary waves
-
- test: True
 """
 
 import sympy as sp
@@ -59,39 +55,45 @@ def run(dx, Tf, generator="numpy", sorder=None, withPlot=True):
     ymina, ymaxa, yminb, ymaxb = 1., 1.75, 1., 1.5
 
     dico = {
-        'box':{'x':[xmin, xmax], 'label':0},
-        'space_step':dx,
-        'scheme_velocity':la,
-        'schemes':[
+        'box': {
+            'x': [xmin, xmax],
+            'label': 0
+        },
+        'space_step': dx,
+        'scheme_velocity': la,
+        'schemes': [
             {
-                'velocities':[1,2],
-                'conserved_moments':ua,
-                'polynomials':[1, LA*X],
-                'relaxation_parameters':[0, s],
-                'equilibrium':[ua, -ub],
-                'init':{ua:(Riemann_pb, (xmin, xmax, uaL, uaR))},
+                'velocities': [1, 2],
+                'conserved_moments': ua,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0, s],
+                'equilibrium': [ua, -ub],
+                'init': {ua: (Riemann_pb, (xmin, xmax, uaL, uaR))},
             },
             {
-                'velocities':[1,2],
-                'conserved_moments':ub,
-                'polynomials':[1, LA*X],
-                'relaxation_parameters':[0, s],
-                'equilibrium':[ub, ua**(-gamma)],
-                'init':{ub:(Riemann_pb, (xmin, xmax, ubL, ubR))},
+                'velocities': [1, 2],
+                'conserved_moments': ub,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0, s],
+                'equilibrium': [ub, ua**(-gamma)],
+                'init': {ub: (Riemann_pb, (xmin, xmax, ubL, ubR))},
             },
         ],
-        'boundary_conditions':{
-            0:{'method':{0: pylbm.bc.Neumann, 1: pylbm.bc.Neumann}},
+        'boundary_conditions': {
+            0: {'method': {
+                0: pylbm.bc.Neumann,
+                1: pylbm.bc.Neumann
+                }},
         },
         'generator': generator,
-        'parameters':{LA:la},
+        'parameters': {LA: la},
     }
 
     sol = pylbm.Simulation(dico, sorder=sorder)
 
     if withPlot:
         # create the viewer to plot the solution
-        viewer = pylbm.viewer.matplotlibViewer
+        viewer = pylbm.viewer.matplotlib_viewer
         fig = viewer.Fig(2, 1)
         ax1 = fig[0]
         ax1.axis(xmin, xmax, .9*ymina, 1.1*ymaxa)
@@ -103,7 +105,7 @@ def run(dx, Tf, generator="numpy", sorder=None, withPlot=True):
         l2 = ax2.plot(x, sol.m[ub])[0]
 
         def update(iframe):
-            if sol.t<Tf:
+            if sol.t < Tf:
                 sol.one_time_step()
                 l1.set_data(x, sol.m[ua])
                 l2.set_data(x, sol.m[ub])

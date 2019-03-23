@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import division
 """
  Solver D1Q2Q2 for the shallow water system on [0, 1]
 
@@ -57,39 +55,47 @@ def run(dx, Tf, generator="numpy", sorder=None, withPlot=True):
     ymina, ymaxa, yminb, ymaxb = 0., 1., 0., .5
 
     dico = {
-        'box':{'x':[xmin, xmax], 'label':0},
-        'space_step':dx,
-        'scheme_velocity':la,
-        'schemes':[
+        'box': {
+            'x': [xmin, xmax],
+            'label': 0
+        },
+        'space_step': dx,
+        'scheme_velocity': la,
+        'schemes': [
             {
-                'velocities':[1,2],
-                'conserved_moments':h,
-                'polynomials':[1, LA*X],
-                'relaxation_parameters':[0, s],
-                'equilibrium':[h, q],
-                'init':{h:(Riemann_pb, (xmin, xmax, hL, hR))},
+                'velocities': [1, 2],
+                'conserved_moments': h,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0, s],
+                'equilibrium': [h, q],
+                'init': {h: (Riemann_pb, (xmin, xmax, hL, hR))},
             },
             {
-                'velocities':[1,2],
-                'conserved_moments':q,
-                'polynomials':[1, LA*X],
-                'relaxation_parameters':[0, s],
-                'equilibrium':[q, q**2/h+.5*g*h**2],
-                'init':{q:(Riemann_pb, (xmin, xmax, qL, qR))},
+                'velocities': [1, 2],
+                'conserved_moments': q,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0, s],
+                'equilibrium': [q, q**2/h+.5*g*h**2],
+                'init': {q: (Riemann_pb, (xmin, xmax, qL, qR))},
             },
         ],
-        'boundary_conditions':{
-            0:{'method':{0: pylbm.bc.Neumann, 1: pylbm.bc.Neumann}},
+        'boundary_conditions': {
+            0: {
+                'method': {
+                    0: pylbm.bc.Neumann,
+                    1: pylbm.bc.Neumann
+                }
+            },
         },
         'generator': generator,
-        'parameters':{LA:la, g:1.},
+        'parameters': {LA: la, g: 1.},
     }
 
     sol = pylbm.Simulation(dico, sorder=sorder)
 
     if withPlot:
         # create the viewer to plot the solution
-        viewer = pylbm.viewer.matplotlibViewer
+        viewer = pylbm.viewer.matplotlib_viewer
         fig = viewer.Fig(2, 1)
         ax1 = fig[0]
         ax1.axis(xmin, xmax, .9*ymina, 1.1*ymaxa)

@@ -1,16 +1,12 @@
-from __future__ import print_function, division
-from six.moves import range
-import numpy as np
-import sympy as sp
-import pyLBM
-import sys
-
 """
-
 Rayleigh-Benard instability simulated by
 Navier-Stokes solver D2Q9 coupled to thermic solver D2Q5
-
 """
+import numpy as np
+import sympy as sp
+import pylbm
+import sys
+
 def printProgress (iteration, total, prefix = '', suffix = '', decimals = 1, barLength = 100):
     """
     Call in a loop to create terminal progress bar
@@ -32,7 +28,7 @@ def printProgress (iteration, total, prefix = '', suffix = '', decimals = 1, bar
         sys.stdout.write('\n')
         sys.stdout.flush()
 
-VTK_save = True
+h5_save = True
 
 X, Y, LA = sp.symbols('X, Y, LA')
 rho, qx, qy, T = sp.symbols('rho, qx, qy, T')
@@ -52,14 +48,11 @@ def bc_down(f, m, x, y):
     m[qy] = 0.
     m[T] = Td# + (Td-Tu) * 5 * (0.1*np.random.random_sample((x.shape[0],1))-0.05)
 
-def save(x, y, m, num):
-    if num > 0:
-        vtk = pyLBM.VTKFile(filename, path, num)
-    else:
-        vtk = pyLBM.VTKFile(filename, path, num, init_pvd = True)
-    vtk.set_grid(x, y)
-    vtk.add_scalar('T', m[T])
-    vtk.save()
+def save(sol, filename, path, num):
+    h5 = pylbm.H5File(sol.domain.mpi_topo, filename, path, num)
+    h5.set_grid(sol.domain.x, sol.domain.y)
+    h5.add_scalar('T', sol.m[T])
+    h5.save()
 
 # parameters
 Tu = -0.5
@@ -69,7 +62,7 @@ Ra = 2000
 Pr = 0.71
 Ma = 0.01
 alpha = .005
-if VTK_save:
+if h5_save:
     dx = 1./256 # spatial step
 else:
     dx = 1./128
@@ -92,67 +85,79 @@ snu = se
 sT = [0., skappa, skappa, se, snu]
 
 dico = {
-    'box':{'x':[xmin, xmax], 'y':[ymin, ymax], 'label':[-1, -1, 0, 1]},
-    'space_step':dx,
-    'scheme_velocity':la,
-    'schemes':[
+    'box': {
+        'x': [xmin, xmax],
+        'y': [ymin, ymax],
+        'label': [-1, -1, 0, 1]
+    },
+    'space_step': dx,
+    'scheme_velocity': la,
+    'schemes': [
         {
-            'velocities':list(range(9)),
+            'velocities': list(range(9)),
             'conserved_moments': [rho, qx, qy],
-            'polynomials':[
+            'polynomials': [
                 1, X, Y,
                 3*(X**2+Y**2)-4,
                 0.5*(9*(X**2+Y**2)**2-21*(X**2+Y**2)+8),
                 3*X*(X**2+Y**2)-5*X, 3*Y*(X**2+Y**2)-5*Y,
                 X**2-Y**2, X*Y
             ],
-            'relaxation_parameters':sf,
-            'equilibrium':[
+            'relaxation_parameters': sf,
+            'equilibrium': [
                 rho, qx, qy,
                 -2*rho + 3*(qx**2+qy**2),
                 rho - 3*(qx**2+qy**2),
                 -qx, -qy,
                 qx**2 - qy**2, qx*qy
             ],
-            'source_terms':{qy: alpha*g * T},
-            'init':{rho: 1., qx: 0., qy: 0.},
+            'source_terms': {qy: alpha*g*T},
+            'init': {
+                rho: 1.,
+                qx: 0.,
+                qy: 0.
+            },
         },
         {
-            'velocities':list(range(5)),
-            'conserved_moments':T,
-            'polynomials':[1, X, Y, 5*(X**2+Y**2) - 4, (X**2-Y**2)],
-            'equilibrium':[T, T*qx, T*qy, a*T, 0.],
-            'relaxation_parameters':sT,
-            'init':{T:(init_T,)},
+            'velocities': list(range(5)),
+            'conserved_moments': T,
+            'polynomials': [1, X, Y, 5*(X**2+Y**2) - 4, (X**2-Y**2)],
+            'equilibrium': [T, T*qx, T*qy, a*T, 0.],
+            'relaxation_parameters': sT,
+            'init': {T: init_T},
         },
     ],
-    'boundary_conditions':{
-        0:{'method':{0: pyLBM.bc.Bouzidi_bounce_back, 1: pyLBM.bc.Bouzidi_anti_bounce_back}, 'value':bc_down},
-        1:{'method':{0: pyLBM.bc.Bouzidi_bounce_back, 1: pyLBM.bc.Bouzidi_anti_bounce_back}, 'value':bc_up},
+    'boundary_conditions': {
+        0: {'method': {0: pylbm.bc.BouzidiBounceBack,
+                       1: pylbm.bc.BouzidiAntiBounceBack},
+            'value': bc_down},
+        1: {'method': {0: pylbm.bc.BouzidiBounceBack,
+                       1: pylbm.bc.BouzidiAntiBounceBack},
+            'value': bc_up},
     },
-    'generator': pyLBM.generator.CythonGenerator,
+    'generator': 'cython',
 }
 
-sol = pyLBM.Simulation(dico)
+sol = pylbm.Simulation(dico)
 
 x, y = sol.domain.x, sol.domain.y
 
-if VTK_save:
+if h5_save:
     Tf = 500.
     im = 0
     l = Tf / sol.dt / 32
-    printProgress(im, l, prefix = 'Progress:', suffix = 'Complete', barLength = 50)
+    printProgress(im, l, prefix='Progress:', suffix='Complete', barLength=50)
     filename = 'Rayleigh_Benard'
     path = './data_' + filename
-    save(x, y, sol.m, im)
-    while sol.t<Tf:
+    save(sol, filename, path, im)
+    while sol.t < Tf:
         for k in range(32):
             sol.one_time_step()
         im += 1
-        printProgress(im, l, prefix = 'Progress:', suffix = 'Complete', barLength = 50)
-        save(x, y, sol.m, im)
+        printProgress(im, l, prefix='Progress:', suffix='Complete', barLength=50)
+        save(sol, filename, path, im)
 else:
-    viewer = pyLBM.viewer.matplotlibViewer
+    viewer = pylbm.viewer.matplotlib_viewer
     fig = viewer.Fig()
     ax = fig[0]
     image = ax.image(sol.m[T].T, cmap='cubehelix', clim=[Tu, Td+.25])

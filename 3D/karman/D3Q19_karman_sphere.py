@@ -1,12 +1,7 @@
-from __future__ import print_function
-from __future__ import division
-"""
-test: True
-"""
-import pylbm
-from six.moves import range
+
 import numpy as np
 import sympy as sp
+import pylbm
 import sys
 
 X, Y, Z, LA = sp.symbols('X, Y, Z, LA')
@@ -119,51 +114,58 @@ def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
     }
 
     dico = {
-        'box':{'x':[0., 2.], 'y':[0., 1.], 'z': [0, 1], 'label':[0, 1, 0, 0, 0, 0]},
-        'elements':[pylbm.Sphere((.3,.5+2*dx,.5+2*dx), radius, 2)],
-        'space_step':dx,
-        'scheme_velocity':la,
-        'schemes':[{
-            'velocities': list(range(19)),
-            'conserved_moments':[rho, qx, qy, qz],
-            'polynomials':[
-                1,
-                X, Y, Z,
-                19*r - 30,
-                3*X**2 - r,
-                Y**2-Z**2,
-                X*Y, 
-                Y*Z, 
-                Z*X,
-                X*(5*r - 9),
-                Y*(5*r - 9),
-                Z*(5*r - 9),
-                X*(Y**2 - Z**2),
-                Y*(Z**2 - X**2),
-                Z*(X**2 - Y**2),
-                (-2*X**2 + Y**2 + Z**2)*(3*r - 5),
-                -5*Y**2 + 5*Z**2 +3*X**2*(Y**2 - Z**2) + 3*Y**4 -3*Z**4,
-                -53*r + 21*r**2 + 24
-            ],
-            'relaxation_parameters': s,#[0]*4 + [1./tau]*15,
-            'feq':(feq, (sp.Matrix([qx, qy, qz]),)),
-            'init':{
-                rho:rhoo,
-                qx: rhoo*uo,
-                qy: 0.,
-                qz: 0.
-            },
+        'box': {
+            'x': [0., 2.],
+            'y': [0., 1.],
+            'z': [0., 1.],
+            'label': [0, 1, 0, 0, 0, 0]
+        },
+        'elements':[pylbm.Sphere((.3, .5+2*dx, .5+2*dx), radius, 2)],
+        'space_step': dx,
+        'scheme_velocity': la,
+        'schemes': [
+            {
+                'velocities': list(range(19)),
+                'conserved_moments': [rho, qx, qy, qz],
+                'polynomials': [
+                    1,
+                    X, Y, Z,
+                    19*r - 30,
+                    3*X**2 - r,
+                    Y**2-Z**2,
+                    X*Y, 
+                    Y*Z, 
+                    Z*X,
+                    X*(5*r - 9),
+                    Y*(5*r - 9),
+                    Z*(5*r - 9),
+                    X*(Y**2 - Z**2),
+                    Y*(Z**2 - X**2),
+                    Z*(X**2 - Y**2),
+                    (-2*X**2 + Y**2 + Z**2)*(3*r - 5),
+                    -5*Y**2 + 5*Z**2 + 3*X**2*(Y**2 - Z**2) + 3*Y**4 - 3*Z**4,
+                    -53*r + 21*r**2 + 24
+                ],
+                'relaxation_parameters': s,#[0]*4 + [1./tau]*15,
+                'feq': (feq, (sp.Matrix([qx, qy, qz]),)),
+                'init': {
+                    rho: rhoo,
+                    qx: rhoo*uo,
+                    qy: 0.,
+                    qz: 0.
+                },
         }],
-        'boundary_conditions':{
-            0:{'method':{0: pylbm.bc.Bouzidi_bounce_back}, 'value':(bc_rect, (rhoo, uo))},
-            1:{'method':{0: pylbm.bc.Neumann_x}},
-            2:{'method':{0: pylbm.bc.Bouzidi_bounce_back}},
+        'boundary_conditions': {
+            0: {'method': {0: pylbm.bc.BouzidiBounceBack}, 'value': (bc_rect, (rhoo, uo))},
+            1: {'method': {0: pylbm.bc.NeumannX}},
+            2: {'method': {0: pylbm.bc.BouzidiBounceBack}},
         },
         'parameters': {LA: la},
         'generator': generator,
     }
 
     sol = pylbm.Simulation(dico, sorder=sorder)
+    return
     dt = 1./4
 
     if withPlot:
@@ -171,7 +173,7 @@ def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
         plot_field = plot_vorticity
 
         #### init viewer
-        viewer = pylbm.viewer.matplotlibViewer
+        viewer = pylbm.viewer.matplotlib_viewer
         fig = viewer.Fig()
         ax = fig[0]
         ax.xaxis_set_visible(False)

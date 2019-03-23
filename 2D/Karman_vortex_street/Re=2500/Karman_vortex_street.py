@@ -1,8 +1,6 @@
-from __future__ import print_function, division
-from six.moves import range
 import numpy as np
 import sympy as sp
-import pyLBM
+import pylbm
 import sys
 
 """
@@ -33,7 +31,7 @@ def printProgress (iteration, total, prefix = '', suffix = '', decimals = 1, bar
         sys.stdout.write('\n')
         sys.stdout.flush()
 
-VTK_save = True
+h5_save = True
 
 X, Y, LA = sp.symbols('X, Y, LA')
 rho, qx, qy = sp.symbols('rho, qx, qy')
@@ -50,20 +48,17 @@ def vorticity(sol):
                   - qy_n[2:, 1:-1] + qy_n[:-2, 1:-1])
     return vort.T
 
-def save(x, y, m, num):
-    if num > 0:
-        vtk = pyLBM.VTKFile(filename, path, num)
-    else:
-        vtk = pyLBM.VTKFile(filename, path, num, init_pvd = True)
-    vtk.set_grid(x, y)
-    vtk.add_scalar('rho', m[rho])
-    vtk.add_vector('velocity', [m[qx], m[qy]])
-    vtk.save()
+def save(mpi_topo, x, y, m, num):
+    h5 = pylbm.H5File(mpi_topo, filename, path, num)
+    h5.set_grid(x, y)
+    h5.add_scalar('rho', m[rho])
+    h5.add_vector('velocity', [m[qx], m[qy]])
+    h5.save()
 
 # parameters
 xmin, xmax, ymin, ymax = 0., 2., 0., 1.
 radius = 0.125
-if VTK_save:
+if h5_save:
     dx = 1./512 # spatial step
 else:
     dx = 1./128
@@ -83,14 +78,17 @@ q2  = qx2+qy2
 qxy = dummy*qx*qy
 
 dico = {
-    'box':{'x':[xmin, xmax], 'y':[ymin, ymax], 'label':[0, 1, 0, 0]},
-    'elements':[pyLBM.Circle([.3, 0.5*(ymin+ymax)+2*dx], radius, label=2)],
-    'space_step':dx,
-    'scheme_velocity':LA,
-    'schemes':[
+    'box': {
+        'x': [xmin, xmax],
+        'y': [ymin, ymax],
+        'label': [0, 1, 0, 0]},
+    'elements': [pylbm.Circle([.3, 0.5*(ymin+ymax)+2*dx], radius, label=2)],
+    'space_step': dx,
+    'scheme_velocity': LA,
+    'schemes': [
         {
-            'velocities':list(range(9)),
-            'polynomials':[
+            'velocities': list(range(9)),
+            'polynomials': [
                 1,
                 LA*X, LA*Y,
                 3*(X**2+Y**2)-4,
@@ -98,8 +96,8 @@ dico = {
                 3*X*(X**2+Y**2)-5*X, 3*Y*(X**2+Y**2)-5*Y,
                 X**2-Y**2, X*Y
             ],
-            'relaxation_parameters':s,
-            'equilibrium':[
+            'relaxation_parameters': s,
+            'equilibrium': [
                 rho,
                 qx, qy,
                 -2*rho + 3*q2,
@@ -108,41 +106,41 @@ dico = {
                 qx2 - qy2, qxy
             ],
             'conserved_moments': [rho, qx, qy],
-            'init':{rho: rhoo, qx: rhoo*uo, qy: 0.},
+            'init': {rho: rhoo, qx: rhoo*uo, qy: 0.},
         },
     ],
-    'parameters':{LA:la},
-    'boundary_conditions':{
-        0:{'method':{0: pyLBM.bc.Bouzidi_bounce_back}, 'value':(bc_rect, (rhoo, uo))},
-        1:{'method':{0: pyLBM.bc.Neumann_x}},
-        2:{'method':{0: pyLBM.bc.Bouzidi_bounce_back}},
+    'parameters': {LA: la},
+    'boundary_conditions': {
+        0: {'method': {0: pylbm.bc.BouzidiBounceBack}, 'value': (bc_rect, (rhoo, uo))},
+        1: {'method': {0: pylbm.bc.NeumannX}},
+        2: {'method': {0: pylbm.bc.BouzidiBounceBack}},
     },
-    'generator': pyLBM.generator.CythonGenerator,
+    'generator': 'cython',
 }
 
-sol = pyLBM.Simulation(dico)
+sol = pylbm.Simulation(dico)
 
 Re = rhoo*uo*2*radius/mu
 print("Reynolds number {0:10.3e}".format(Re))
 
 x, y = sol.domain.x, sol.domain.y
 
-if VTK_save:
+if h5_save:
     Tf = 500.
     im = 0
     l = Tf / sol.dt / 64
-    printProgress(im, l, prefix = 'Progress:', suffix = 'Complete', barLength = 50)
+    printProgress(im, l, prefix='Progress:', suffix='Complete', barLength=50)
     filename = 'Karman'
     path = './data_' + filename
-    save(x, y, sol.m, im)
-    while sol.t<Tf:
+    save(sol.domain.mpi_topo, x, y, sol.m, im)
+    while sol.t < Tf:
         for k in range(64):
             sol.one_time_step()
         im += 1
-        printProgress(im, l, prefix = 'Progress:', suffix = 'Complete', barLength = 50)
-        save(x, y, sol.m, im)
+        printProgress(im, l, prefix='Progress:', suffix='Complete', barLength=50)
+        save(sol.domain.mpi_topo, x, y, sol.m, im)
 else:
-    viewer = pyLBM.viewer.matplotlibViewer
+    viewer = pylbm.viewer.matplotlib_viewer
     fig = viewer.Fig()
     ax = fig[0]
     ax.ellipse([.3/dx, 0.5*(ymin+ymax)/dx+2], [radius/dx, radius/dx], 'r')

@@ -1,5 +1,3 @@
-from __future__ import print_function
-from __future__ import division
 """
  Solver D1Q2Q2 for the Euler system on [0, 1]
 
@@ -22,10 +20,7 @@ from __future__ import division
 
  the initial condition is a picewise constant function
  in order to simulate the Sod's shock tube
-
- test: True
 """
-
 import sympy as sp
 import numpy as np
 import pylbm
@@ -40,7 +35,7 @@ def Riemann_pb(x, xmin, xmax, uL, uR):
     u[x > xm] = uR
     return u
 
-def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
+def run(dx, Tf, generator="numpy", sorder=None, withPlot=True):
     """
     Parameters
     ----------
@@ -72,51 +67,54 @@ def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
     s_rho, s_q, s_E = 1.9, 1.5, 1.4
 
     dico = {
-        'box':{'x':[xmin, xmax], 'label':0},
-        'space_step':dx,
-        'scheme_velocity':la,
-        'schemes':[
+        'box': {
+            'x': [xmin, xmax],
+            'label': 0
+        },
+        'space_step': dx,
+        'scheme_velocity': la,
+        'schemes': [
             {
-                'velocities':[1,2],
-                'conserved_moments':rho,
-                'polynomials':[1, LA*X],
-                'relaxation_parameters':[0, s_rho],
-                'equilibrium':[rho, q],
-                'init':{rho:(Riemann_pb, (xmin, xmax, rho_L, rho_R))},
+                'velocities': [1, 2],
+                'conserved_moments': rho,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0, s_rho],
+                'equilibrium': [rho, q],
+                'init': {rho: (Riemann_pb, (xmin, xmax, rho_L, rho_R))},
             },
             {
-                'velocities':[1,2],
-                'conserved_moments':q,
-                'polynomials':[1, LA*X],
-                'relaxation_parameters':[0, s_q],
-                'equilibrium':[q, (gamma-1.)*E+0.5*(3.-gamma)*q**2/rho],
-                'init':{q:(Riemann_pb, (xmin, xmax, q_L, q_R))},
+                'velocities': [1, 2],
+                'conserved_moments': q,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0, s_q],
+                'equilibrium': [q, (gamma-1.)*E + 0.5*(3.-gamma)*q**2/rho],
+                'init': {q: (Riemann_pb, (xmin, xmax, q_L, q_R))},
             },
             {
-                'velocities':[1,2],
-                'conserved_moments':E,
-                'polynomials':[1, LA*X],
-                'relaxation_parameters':[0, s_E],
-                'equilibrium':[E, gamma*E*q/rho-0.5*(gamma-1.)*q**3/rho**2],
-                'init':{E:(Riemann_pb, (xmin, xmax, E_L, E_R))},
+                'velocities': [1, 2],
+                'conserved_moments': E,
+                'polynomials': [1, LA*X],
+                'relaxation_parameters': [0, s_E],
+                'equilibrium': [E, gamma*E*q/rho - 0.5*(gamma-1.)*q**3/rho**2],
+                'init': {E: (Riemann_pb, (xmin, xmax, E_L, E_R))},
             },
         ],
-        'boundary_conditions':{
-            0:{
-                'method':{
+        'boundary_conditions': {
+            0: {
+                'method': {
                     0: pylbm.bc.Neumann,
                     1: pylbm.bc.Neumann,
                     2: pylbm.bc.Neumann
                 },
             },
         },
-        'parameters':{LA:la},
+        'parameters': {LA: la},
         'generator': generator,
     }
 
     sol = pylbm.Simulation(dico, sorder=sorder)
 
-    while (sol.t<Tf):
+    while sol.t < Tf:
         sol.one_time_step()
 
     if withPlot:
@@ -128,7 +126,7 @@ def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
         p = (gamma-1.)*(E_n - .5*rho_n*u**2)
         e = E_n/rho_n - .5*u**2
 
-        viewer= pylbm.viewer.matplotlibViewer
+        viewer = pylbm.viewer.matplotlib_viewer
         fig = viewer.Fig(2, 3)
 
         fig[0,0].plot(x, rho_n)

@@ -1,5 +1,3 @@
-from __future__ import print_function, division
-from six.moves import range
 """
 D2Q4 solver for the MHD system (in 2D)
 
@@ -23,10 +21,9 @@ initial conditions
 """
 import numpy as np
 import sympy as sp
-
 import pylbm
 
-hdf5_save = True
+h5_save = True
 
 GA, X, Y, LA = sp.symbols('GA, X, Y, LA')
 rho, qx, qy, E, Bx, By = sp.symbols('rho, qx, qy, E, Bx, By')
@@ -71,7 +68,7 @@ def save(mpi_topo, x, y, m, num):
 if __name__ == "__main__":
     # parameters
     xmin, xmax, ymin, ymax = 0., 2*np.pi, 0., 2*np.pi
-    if hdf5_save:
+    if h5_save:
         dx = np.pi / 256
         s0, s1, s2, s3 = [1.9]*4
     else:
@@ -88,105 +85,108 @@ if __name__ == "__main__":
     vB = (qx*Bx + qy*By)/rho
 
     dico = {
-        'box':{'x':[xmin, xmax], 'y':[ymin, ymax], 'label':-1},
-        'space_step':dx,
-        'scheme_velocity':la,
-        'schemes':[
+        'box': {
+            'x': [xmin, xmax],
+            'y': [ymin, ymax],
+            'label':-1
+        },
+        'space_step': dx,
+        'scheme_velocity': la,
+        'schemes': [
             {
-                'velocities':list(range(1,5)),
-                'conserved_moments':rho,
-                'polynomials':[1, LA*X, LA*Y, X**2-Y**2],
-                'relaxation_parameters':s_rho,
-                'equilibrium':[rho, qx, qy, 0.],
-                'init':{rho:(init_rho,)},
+                'velocities': list(range(1, 5)),
+                'conserved_moments': rho,
+                'polynomials': [1, LA*X, LA*Y, X**2-Y**2],
+                'relaxation_parameters': s_rho,
+                'equilibrium': [rho, qx, qy, 0.],
+                'init': {rho: init_rho},
             },
             {
-                'velocities':list(range(1,5)),
-                'conserved_moments':qx,
-                'polynomials':[1, LA*X, LA*Y, X**2-Y**2],
-                'relaxation_parameters':s_q,
-                'equilibrium':[
+                'velocities': list(range(1,5)),
+                'conserved_moments': qx,
+                'polynomials': [1, LA*X, LA*Y, X**2-Y**2],
+                'relaxation_parameters': s_q,
+                'equilibrium': [
                     qx,
                     qx**2/rho + ps - Bx**2,
                     qx*qy/rho - Bx*By,
                     0.
                 ],
-                'init':{qx:(init_qx,)},
+                'init': {qx: init_qx},
             },
             {
-                'velocities':list(range(1,5)),
-                'conserved_moments':qy,
-                'polynomials':[1, LA*X, LA*Y, X**2-Y**2],
-                'relaxation_parameters':s_q,
-                'equilibrium':[
+                'velocities': list(range(1, 5)),
+                'conserved_moments': qy,
+                'polynomials': [1, LA*X, LA*Y, X**2-Y**2],
+                'relaxation_parameters': s_q,
+                'equilibrium': [
                     qy,
                     qx*qy/rho - Bx*By,
                     qy**2/rho + ps - By**2,
                     0.
                 ],
-                'init':{qy:(init_qy,)},
+                'init': {qy: init_qy},
             },
             {
-                'velocities':list(range(1,5)),
-                'conserved_moments':E,
-                'polynomials':[1, LA*X, LA*Y, X**2-Y**2],
-                'relaxation_parameters':s_E,
-                'equilibrium':[
+                'velocities': list(range(1, 5)),
+                'conserved_moments': E,
+                'polynomials': [1, LA*X, LA*Y, X**2-Y**2],
+                'relaxation_parameters': s_E,
+                'equilibrium': [
                     E,
                     (E+ps)*qx/rho - vB*Bx,
                     (E+ps)*qy/rho - vB*By,
                     0.
                 ],
-                'init':{E:(init_E,)},
+                'init': {E: init_E},
             },
             {
-                'velocities':list(range(1,5)),
-                'conserved_moments':Bx,
-                'polynomials':[1, LA*X, LA*Y, X**2-Y**2],
-                'relaxation_parameters':s_B,
-                'equilibrium':[
+                'velocities': list(range(1, 5)),
+                'conserved_moments': Bx,
+                'polynomials': [1, LA*X, LA*Y, X**2-Y**2],
+                'relaxation_parameters': s_B,
+                'equilibrium': [
                     Bx,
                     0,
                     (qy*Bx - qx*By)/rho,
                     0.
                 ],
-                'init':{Bx:(init_Bx,)},
+                'init': {Bx: init_Bx},
             },
             {
-                'velocities':list(range(1,5)),
-                'conserved_moments':By,
-                'polynomials':[1, LA*X, LA*Y, X**2-Y**2],
-                'relaxation_parameters':s_B,
-                'equilibrium':[
+                'velocities': list(range(1, 5)),
+                'conserved_moments': By,
+                'polynomials': [1, LA*X, LA*Y, X**2-Y**2],
+                'relaxation_parameters': s_B,
+                'equilibrium': [
                     By,
                     (qx*By - qy*Bx)/rho,
                     0,
                     0.
                 ],
-                'init':{By:(init_By,)},
+                'init': {By: init_By},
             },
         ],
-        'parameters':{LA:la, GA:gamma},
+        'parameters': {LA: la, GA: gamma},
         'generator': 'cython',
     }
 
     sol = pylbm.Simulation(dico)
 
-
-    if hdf5_save:
+    if h5_save:
         filename = 'Orszag_Tang_vortex'
         path = './data_Orszag_Tang_vortex'
         im = 0
         x, y = sol.domain.x, sol.domain.y
-        save(sol.mpi_topo, x, y, sol.m, im)
+        save(sol.domain.mpi_topo, x, y, sol.m, im)
         while sol.t < 100.:
             for k in range(256):
                 sol.one_time_step()
             im += 1
-            save(sol.mpi_topo, x, y, sol.m, im)
+            save(sol.domain.mpi_topo, x, y, sol.m, im)
     else:
         # init viewer
-        viewer = pylbm.viewer.matplotlibViewer
+        viewer = pylbm.viewer.matplotlib_viewer
         fig = viewer.Fig()
         ax = fig[0]
         N, M = sol.m[rho].shape
