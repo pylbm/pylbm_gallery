@@ -106,9 +106,12 @@ dico = {
                 qx2 - qy2, qxy
             ],
             'conserved_moments': [rho, qx, qy],
-            'init': {rho: rhoo, qx: rhoo*uo, qy: 0.},
         },
     ],
+    'init': {rho: rhoo,
+             qx: rhoo*uo,
+             qy: 0.
+    },
     'parameters': {LA: la},
     'boundary_conditions': {
         0: {'method': {0: pylbm.bc.BouzidiBounceBack}, 'value': (bc_rect, (rhoo, uo))},

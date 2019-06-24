@@ -99,7 +99,6 @@ if __name__ == "__main__":
                 'polynomials': [1, LA*X, LA*Y, X**2-Y**2],
                 'relaxation_parameters': s_rho,
                 'equilibrium': [rho, qx, qy, 0.],
-                'init': {rho: init_rho},
             },
             {
                 'velocities': list(range(1,5)),
@@ -112,7 +111,6 @@ if __name__ == "__main__":
                     qx*qy/rho - Bx*By,
                     0.
                 ],
-                'init': {qx: init_qx},
             },
             {
                 'velocities': list(range(1, 5)),
@@ -125,7 +123,6 @@ if __name__ == "__main__":
                     qy**2/rho + ps - By**2,
                     0.
                 ],
-                'init': {qy: init_qy},
             },
             {
                 'velocities': list(range(1, 5)),
@@ -138,7 +135,6 @@ if __name__ == "__main__":
                     (E+ps)*qy/rho - vB*By,
                     0.
                 ],
-                'init': {E: init_E},
             },
             {
                 'velocities': list(range(1, 5)),
@@ -151,7 +147,6 @@ if __name__ == "__main__":
                     (qy*Bx - qx*By)/rho,
                     0.
                 ],
-                'init': {Bx: init_Bx},
             },
             {
                 'velocities': list(range(1, 5)),
@@ -164,9 +159,15 @@ if __name__ == "__main__":
                     0,
                     0.
                 ],
-                'init': {By: init_By},
             },
         ],
+        'init': {rho: init_rho,
+                 qx: init_qx,
+                 qy: init_qy,
+                 E: init_E,
+                 Bx: init_Bx,
+                 By: init_By
+        }
         'parameters': {LA: la, GA: gamma},
         'generator': 'cython',
     }

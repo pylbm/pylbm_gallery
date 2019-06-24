@@ -148,13 +148,13 @@ def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
                 ],
                 'relaxation_parameters': s,#[0]*4 + [1./tau]*15,
                 'feq': (feq, (sp.Matrix([qx, qy, qz]),)),
-                'init': {
-                    rho: rhoo,
-                    qx: rhoo*uo,
-                    qy: 0.,
-                    qz: 0.
-                },
         }],
+        'init': {
+            rho: rhoo,
+            qx: rhoo*uo,
+            qy: 0.,
+            qz: 0.
+        },
         'boundary_conditions': {
             0: {'method': {0: pylbm.bc.BouzidiBounceBack}, 'value': (bc_rect, (rhoo, uo))},
             1: {'method': {0: pylbm.bc.NeumannX}},

@@ -68,7 +68,6 @@ def run(dx, Tf, generator="numpy", sorder=None, withPlot=True):
                 'polynomials': [1, LA*X],
                 'relaxation_parameters': [0, s],
                 'equilibrium': [ua, -ub],
-                'init': {ua: (Riemann_pb, (xmin, xmax, uaL, uaR))},
             },
             {
                 'velocities': [1, 2],
@@ -76,9 +75,10 @@ def run(dx, Tf, generator="numpy", sorder=None, withPlot=True):
                 'polynomials': [1, LA*X],
                 'relaxation_parameters': [0, s],
                 'equilibrium': [ub, ua**(-gamma)],
-                'init': {ub: (Riemann_pb, (xmin, xmax, ubL, ubR))},
             },
         ],
+        'init': {ua: (Riemann_pb, (xmin, xmax, uaL, uaR)),
+                 ub: (Riemann_pb, (xmin, xmax, ubL, ubR))},
         'boundary_conditions': {
             0: {'method': {
                 0: pylbm.bc.Neumann,

@@ -86,9 +86,9 @@ def run(dx, Tf, generator="numpy", sorder=None, withPlot=True):
                 'polynomials': [1, LA*X],
                 'relaxation_parameters': [0., s],
                 'equilibrium': [u, u**2/2],
-                'init': {u: (u0, (xmin, xmax, uL, uR))},
             },
         ],
+        'init': {u: (u0, (xmin, xmax, uL, uR))},
         'boundary_conditions': {
             0: {'method': {0: pylbm.bc.Neumann}},
         },

@@ -124,7 +124,6 @@ def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
                 'relaxation_parameters': sf,
                 'feq': (feq_NS, (sp.Matrix([qx, qy, qz]),)),
                 'source_terms': {qy: beta*g*T},
-                'init': {rho: 1., qx: 0., qy: 0., qz: 0.},
             },
             {
                 'velocities': list(range(1, 7)),
@@ -135,9 +134,14 @@ def run(dx, Tf, generator="cython", sorder=None, withPlot=True):
                                ],
                 'feq': (feq_T, (sp.Matrix([qx, qy, qz]),)),
                 'relaxation_parameters': sT,
-                'init': {T: init_T},
             },
         ],
+        'init': {rho: 1.,
+                 qx: 0.,
+                 qy: 0.,
+                 qz: 0.,
+                 T: init_T
+        },
         'boundary_conditions': {
             0: {'method': {0: pylbm.bc.BouzidiBounceBack, 1: pylbm.bc.BouzidiAntiBounceBack}, 'value': bc_down},
             1: {'method': {0: pylbm.bc.BouzidiBounceBack, 1: pylbm.bc.BouzidiAntiBounceBack}, 'value': bc_up},

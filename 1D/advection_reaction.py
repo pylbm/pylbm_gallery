@@ -67,9 +67,9 @@ def run(dt, Tf, generator='numpy', sorder=None, withPlot=True):
                 'relaxation_parameters': [0., s],
                 'equilibrium': [u, C*u],
                 'source_terms': {u: MU*u*(1-u)},
-                'init': {u: (u0, (xmin, xmax))},
             },
         ],
+        'init': {u: (u0, (xmin, xmax))},
         'generator': generator,
         'parameters': {LA: la, C: c, MU: mu},
     }

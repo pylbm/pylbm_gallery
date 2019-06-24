@@ -81,7 +81,6 @@ dico   = {
             'polynomials': polynomes,
             'relaxation_parameters': s0,
             'equilibrium': [rho, qx, qy, 0.],
-            'init': {rho: initialization_rho},
         },
         {
             'velocities': vitesse,
@@ -89,7 +88,6 @@ dico   = {
             'polynomials': polynomes,
             'relaxation_parameters': s1,
             'equilibrium': [qx, qx**2/rho + 0.5*g*rho**2, qx*qy/rho, 0.],
-            'init': {qx: 0.},
         },
         {
             'velocities': vitesse,
@@ -97,9 +95,12 @@ dico   = {
             'polynomials': polynomes,
             'relaxation_parameters': s1,
             'equilibrium': [qy, qy*qx/rho, qy**2/rho + 0.5*g*rho**2, 0.],
-            'init': {qy: 0.},
         },
     ],
+    'init': {rho: initialization_rho,
+             qx: 0.,
+             qy: 0.
+    },
     'generator': 'cython',
 }
 
